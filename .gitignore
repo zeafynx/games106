@@ -16,6 +16,7 @@ build/
 bld/
 [Bb]in/
 [Oo]bj/
+cmake-build-*/
 
 # CMake
 CMakeCache.txt
@@ -197,6 +198,7 @@ UpgradeLog*.htm
 FakesAssemblies/
 
 .vs/
+.idea/
 
 # Don't ignore 3d models in obj format
 !data/models/*.obj
