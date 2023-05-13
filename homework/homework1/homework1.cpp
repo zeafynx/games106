@@ -82,12 +82,18 @@ public:
         uint32_t index;
 		std::vector<Node*> children;
 		Mesh mesh;
+        glm::vec3 translation{};
+        glm::vec3 scale{ 1.f };
+        glm::quat rotation{};
 		glm::mat4 matrix;
 		~Node() {
 			for (auto& child : children) {
 				delete child;
 			}
 		}
+        glm::mat4 getLocalMatrix() {
+            return glm::translate(glm::mat4(1.f), translation) * glm::mat4(rotation) * glm::scale(glm::mat4(1.f), scale) * matrix;
+        }
 	};
 
 	// A glTF material stores information in e.g. the texture that is attached to it and colors
@@ -478,12 +484,12 @@ public:
 		}
 	}
 
-    void updateJoints(const Node* node, const glm::mat4& parentTransform) {
+    void updateJoints(Node* node, const glm::mat4& parentTransform) {
         if (node == nullptr) {
             return;
         }
 
-        skeleton.jointMatrices[node->index] = parentTransform * node->matrix;
+        skeleton.jointMatrices[node->index] = parentTransform * node->getLocalMatrix();
 
         for (const auto child : node->children) {
             updateJoints(child, skeleton.jointMatrices[node->index]);
@@ -512,13 +518,9 @@ public:
 
                 if ((sampler.inputs[i] <= animation.currentTime) && (animation.currentTime <= sampler.inputs[i + 1])) {
                     float a = (animation.currentTime - sampler.inputs[i]) / (sampler.inputs[i + 1] - sampler.inputs[i]);
-                    glm::vec3 translation{};
                     if (channel.path == "translation") {
-                        translation = glm::mix(sampler.outputsVec4[i], sampler.outputsVec4[i + 1], a);
-                    }
-
-                    glm::quat rotation{};
-                    if (channel.path == "rotation") {
+                        channel.node->translation = glm::mix(sampler.outputsVec4[i], sampler.outputsVec4[i + 1], a);
+                    } else if (channel.path == "rotation") {
                         glm::quat q1;
                         q1.x = sampler.outputsVec4[i].x;
                         q1.y = sampler.outputsVec4[i].y;
@@ -531,18 +533,10 @@ public:
                         q2.z = sampler.outputsVec4[i + 1].z;
                         q2.w = sampler.outputsVec4[i + 1].w;
 
-                        rotation = glm::normalize(glm::slerp(q1, q2, a));
+                        channel.node->rotation = glm::normalize(glm::slerp(q1, q2, a));
+                    } else if (channel.path == "scale") {
+                        channel.node->scale = glm::mix(sampler.outputsVec4[i], sampler.outputsVec4[i + 1], a);
                     }
-
-                    glm::vec3 scale{ 1.f };
-                    if (channel.path == "scale") {
-                        scale = glm::mix(sampler.outputsVec4[i], sampler.outputsVec4[i + 1], a);
-                    }
-
-                    channel.node->matrix = glm::translate(glm::mat4(1.f), translation) *
-                        glm::mat4(rotation) *
-                        glm::scale(glm::mat4(1.f), scale) *
-                        channel.node->matrix;
                 }
             }
         }
