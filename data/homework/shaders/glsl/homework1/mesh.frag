@@ -30,7 +30,7 @@ float D_GGX(float dotNH, float roughness) {
 }
 
 float G_SchlicksmithGGX(float dotNL, float dotNV, float roughness) {
-	float r = (roughness + 1.0);
+	float r = roughness + 1.0;
 	float k = r * r / 8.0;
 	float GL = dotNL / (dotNL * (1.0 - k) + k);
 	float GV = dotNV / (dotNV * (1.0 - k) + k);
@@ -58,7 +58,7 @@ vec3 specularContribution(vec3 L, vec3 V, vec3 N, vec3 F0, float metallic, float
 		float G = G_SchlicksmithGGX(dotNL, dotNV, roughness);
 		vec3 F = F_Schlick(dotNV, F0);
 		vec3 spec = D * F * G / (4.0 * dotNL * dotNV + 0.001);
-		vec3 kD = (vec3(1.F) - F) * (1.0 - metallic);
+		vec3 kD = (vec3(1.0) - F) * (1.0 - metallic);
 		color += (kD * ALBEDO / PI + spec) * dotNL;
 	}
 
@@ -84,13 +84,12 @@ void main()
 
 	float metallic = texture(samplerMetallicRoughnessMap, inUV).b;
 	float roughness = texture(samplerMetallicRoughnessMap, inUV).g;
+	float ao = texture(samplerMetallicRoughnessMap, inUV).r;
 
 	vec3 F0 = vec3(0.04);
 	F0 = mix(F0, ALBEDO, metallic);
 
 	vec3 Lo = specularContribution(L, V, N, F0, metallic, roughness);
-
-	float ao = texture(samplerMetallicRoughnessMap, inUV).r;
 
 	vec3 F = F_SchlickR(max(dot(N, V), 0.0), F0, roughness);
 	vec3 kD = 1.0 - F;
