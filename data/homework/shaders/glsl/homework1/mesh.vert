@@ -23,15 +23,13 @@ layout (set = 2, binding = 0) readonly buffer JointMatrices {
 	mat4 jointMatrices[];
 };
 
-layout (location = 0) out vec3 outNormal;
-layout (location = 1) out vec3 outColor;
-layout (location = 2) out vec3 outWorldPos;
-layout (location = 3) out vec2 outUV;
-layout (location = 4) out vec4 outTangent;
+layout (location = 0) out vec3 outWorldPos;
+layout (location = 1) out vec3 outNormal;
+layout (location = 2) out vec2 outUV;
+layout (location = 3) out vec4 outTangent;
 
 void main()
 {
-	outColor = inColor;
 	vec4 worldPos = jointMatrices[inNodeIndex] * vec4(inPos.xyz, 1.0);
 	outWorldPos = worldPos.xyz;
 	outNormal = mat3(jointMatrices[inNodeIndex]) * inNormal;
